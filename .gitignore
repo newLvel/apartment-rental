@@ -1,0 +1,11 @@
+.dart_tool/
+.idea/
+build/
+windows/flutter/ephemeral/
+android/.gradle/
+android/app/build/
+android/build/
+ios/Flutter/ephemeral/
+*.lock
+.DS_Store
+GEMINI.md
