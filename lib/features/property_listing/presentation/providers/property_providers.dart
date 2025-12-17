@@ -66,7 +66,7 @@ class PropertyController extends _$PropertyController {
 
 @riverpod
 Future<List<Apartment>> apartmentsByOwner(ApartmentsByOwnerRef ref, String ownerId) async {
-  final repository = ref.watch(propertyRepositoryProvider);
-  final allApartments = await repository.getAllApartments();
+  // Watch allApartmentsProvider so this provider automatically re-evaluates when all apartments change.
+  final allApartments = await ref.watch(allApartmentsProvider.future);
   return allApartments.where((apt) => apt.owner.id == ownerId).toList();
 }

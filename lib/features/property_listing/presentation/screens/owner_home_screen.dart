@@ -3,15 +3,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:apartment_rental/features/property_listing/presentation/providers/property_providers.dart';
 import 'package:apartment_rental/features/property_listing/presentation/widgets/property_card.dart';
+import 'package:apartment_rental/features/authentication/presentation/providers/auth_provider.dart'; // Import AuthProvider
 
 class OwnerHomeScreen extends ConsumerWidget {
   const OwnerHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Assuming 'owner1' is the ID of the logged-in owner for now
-    // In a real app, this would come from the AuthProvider
-    const String currentOwnerId = 'owner1'; 
+    final authState = ref.watch(authNotifierProvider);
+    final currentOwnerId = authState.value?.id; // Get logged-in user's ID
+
+    if (currentOwnerId == null) {
+      return Scaffold( // Removed const
+        appBar: AppBar(title: const Text('Owner Dashboard')),
+        body: const Center(child: Text('Please log in as an owner.')),
+      );
+    }
+
     final ownedApartmentsAsync = ref.watch(apartmentsByOwnerProvider(currentOwnerId));
 
     return Scaffold(

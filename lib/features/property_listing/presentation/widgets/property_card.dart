@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../domain/entities/apartment.dart';
 import '../providers/property_providers.dart';
+import 'package:apartment_rental/core/widgets/smart_image.dart';
 
 class PropertyCard extends ConsumerWidget {
   final Apartment apartment;
@@ -39,40 +40,24 @@ class PropertyCard extends ConsumerWidget {
             // Image
             Stack(
               children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16),
-                  ),
-                  child: Image.asset(
-                    apartment.images.first,
-                    height: 140,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        height: 140,
-                        color: Colors.grey[200],
-                        child: const Center(child: Icon(Icons.broken_image)),
-                      );
-                    },
-                  ),
+                SmartImage(
+                  imageUrl: apartment.images.first,
+                  height: 140,
+                  width: double.infinity,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                 ),
                 Positioned(
                   top: 8,
                   right: 8,
                   child: GestureDetector(
                     onTap: () {
-                      ref
-                          .read(propertyControllerProvider.notifier)
-                          .toggleFavorite(apartment.id);
+                      ref.read(propertyControllerProvider.notifier).toggleFavorite(apartment.id);
                     },
                     child: CircleAvatar(
                       backgroundColor: Colors.white,
                       radius: 14,
                       child: Icon(
-                        apartment.isFavorite
-                            ? Icons.favorite
-                            : Icons.favorite_border,
+                        apartment.isFavorite ? Icons.favorite : Icons.favorite_border,
                         size: 16,
                         color: apartment.isFavorite ? Colors.red : Colors.grey,
                       ),

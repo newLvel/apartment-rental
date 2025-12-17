@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:apartment_rental/features/property_listing/presentation/providers/property_providers.dart';
 import 'package:apartment_rental/features/booking/presentation/screens/booking_dialog.dart';
+import 'package:apartment_rental/core/widgets/smart_image.dart';
 
 class ApartmentDetailsScreen extends ConsumerWidget {
   final String apartmentId;
@@ -32,15 +33,9 @@ class ApartmentDetailsScreen extends ConsumerWidget {
                 expandedHeight: 250,
                 pinned: true,
                 flexibleSpace: FlexibleSpaceBar(
-                  background: Image.asset(
-                    apartment.images.first, 
+                  background: SmartImage(
+                    imageUrl: apartment.images.first,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Colors.grey[200],
-                        child: const Center(child: Icon(Icons.broken_image, size: 50)),
-                      );
-                    },
                   ),
                 ),
                 leading: IconButton(

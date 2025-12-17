@@ -234,19 +234,47 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
   }
 
   void _handleRegister() async {
+    debugPrint('[_handleRegister] started');
     if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
-      if (mounted) {
-        if (_selectedRole == UserRole.client) {
-          ref.read(authNotifierProvider.notifier).loginAsClient();
-          context.go('/client_home');
-        } else {
-          ref.read(authNotifierProvider.notifier).loginAsOwner();
-          context.go('/owner_home');
+      debugPrint('[_handleRegister] form is valid');
+      setState(() {
+        _isLoading = true;
+        debugPrint('[_handleRegister] _isLoading set to true');
+      });
+      try {
+        debugPrint('[_handleRegister] calling authNotifierProvider.register');
+        await ref.read(authNotifierProvider.notifier).register(
+          name: _nameController.text,
+          email: _emailController.text,
+          password: _passwordController.text,
+          role: _selectedRole,
+        );
+        debugPrint('[_handleRegister] authNotifierProvider.register completed');
+        if (mounted) {
+          final currentUser = ref.read(authNotifierProvider).value;
+          debugPrint('[_handleRegister] current user: ${currentUser?.email}, role: ${currentUser?.role}');
+          if (currentUser?.role == UserRole.client.name) {
+            context.go('/client_home');
+          } else if (currentUser?.role == UserRole.owner.name) {
+            context.go('/owner_home');
+          }
+        }
+      } catch (e) {
+        debugPrint('[_handleRegister] caught error: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Registration Failed: ${e.toString()}')));
+        }
+      } finally {
+        debugPrint('[_handleRegister] finally block');
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            debugPrint('[_handleRegister] _isLoading set to false');
+          });
         }
       }
+    } else {
+      debugPrint('[_handleRegister] form is NOT valid');
     }
   }
 }

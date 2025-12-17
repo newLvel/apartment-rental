@@ -8,6 +8,7 @@ import 'package:apartment_rental/core/router/app_router.dart';
 import 'package:apartment_rental/features/property_listing/data/models/apartment_model.dart';
 import 'package:apartment_rental/features/property_listing/data/models/owner_model.dart';
 import 'package:apartment_rental/features/booking/data/models/booking_model.dart';
+import 'package:apartment_rental/features/authentication/data/models/user_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,10 +20,13 @@ void main() async {
   Hive.registerAdapter(OwnerModelAdapter());
   Hive.registerAdapter(ApartmentModelAdapter());
   Hive.registerAdapter(BookingModelAdapter());
+  Hive.registerAdapter(UserModelAdapter()); // Register UserModelAdapter
 
   // Open Boxes
   final apartmentBox = await Hive.openBox<ApartmentModel>(AppConstants.apartmentBox);
   await Hive.openBox<BookingModel>(AppConstants.bookingBox);
+  await Hive.openBox<UserModel>(AppConstants.userBox); // Open user box
+  await Hive.openBox<String>(AppConstants.userPreferencesBox); // Open user preferences box
   
   // Seeding
   if (apartmentBox.isEmpty) {

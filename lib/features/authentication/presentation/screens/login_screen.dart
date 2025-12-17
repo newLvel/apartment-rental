@@ -234,17 +234,42 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _handleLogin(WidgetRef ref) async {
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 1)); // Mock delay
-    
-    if (mounted) {
-       if (_selectedRole == UserRole.client) {
-         ref.read(authNotifierProvider.notifier).loginAsClient();
-         context.go('/client_home');
-       } else {
-         ref.read(authNotifierProvider.notifier).loginAsOwner();
-         context.go('/owner_home');
-       }
+    debugPrint('[_handleLogin] started');
+    setState(() {
+      _isLoading = true;
+      debugPrint('[_handleLogin] _isLoading set to true');
+    });
+    try {
+      debugPrint('[_handleLogin] calling authNotifierProvider.login');
+      await ref.read(authNotifierProvider.notifier).login(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+      debugPrint('[_handleLogin] authNotifierProvider.login completed');
+      if (mounted) {
+        final currentUser = ref.read(authNotifierProvider).value;
+        debugPrint('[_handleLogin] current user: ${currentUser?.email}, role: ${currentUser?.role}');
+        if (currentUser?.role == UserRole.client.name) {
+          context.go('/client_home');
+        } else if (currentUser?.role == UserRole.owner.name) {
+          context.go('/owner_home');
+        } else {
+          context.go('/login');
+        }
+      }
+    } catch (e) {
+      debugPrint('[_handleLogin] caught error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Login Failed: ${e.toString()}')));
+      }
+    } finally {
+      debugPrint('[_handleLogin] finally block');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          debugPrint('[_handleLogin] _isLoading set to false');
+        });
+      }
     }
   }
 }

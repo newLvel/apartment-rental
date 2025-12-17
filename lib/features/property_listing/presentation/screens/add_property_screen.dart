@@ -1,10 +1,14 @@
+import 'dart:io'; // Import for File class
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart'; // Import image_picker
 import 'package:uuid/uuid.dart';
 import 'package:apartment_rental/features/property_listing/domain/entities/apartment.dart';
 import 'package:apartment_rental/features/property_listing/domain/entities/owner.dart';
 import 'package:apartment_rental/features/property_listing/presentation/providers/property_providers.dart';
+import 'package:apartment_rental/features/authentication/presentation/providers/auth_provider.dart';
 
 class AddPropertyScreen extends ConsumerStatefulWidget {
   const AddPropertyScreen({super.key});
@@ -24,6 +28,10 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
   final _bathroomsController = TextEditingController();
   final _areaController = TextEditingController();
   
+  // Image picker
+  String? _selectedImagePath; // To store the path of the selected image
+  final ImagePicker _picker = ImagePicker();
+
   // Amenities selection
   final Map<String, bool> _amenities = {
     'Wifi': false,
@@ -34,16 +42,6 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
     'Pet Friendly': false,
     'Garden': false,
   };
-
-  // Image selection
-  final List<String> _availableImages = [
-    'assets/images/apartment_1.png',
-    'assets/images/apartment_2.webp',
-    'assets/images/apartment_3.webp',
-    'assets/images/apartment_4.webp',
-    'assets/images/apartment_5.webp',
-  ];
-  String? _selectedImage;
 
   @override
   void dispose() {
@@ -57,10 +55,18 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    setState(() {
+      _selectedImagePath = image?.path;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final controllerState = ref.watch(propertyControllerProvider);
     final isLoading = controllerState.isLoading;
+    final currentUser = ref.watch(authNotifierProvider).value; // Get current user
 
     ref.listen(propertyControllerProvider, (previous, next) {
       if (!next.isLoading && !next.hasError && previous?.isLoading == true) {
@@ -81,40 +87,38 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-               // Image Picker (Simulation)
-              const Text('Property Image', style: TextStyle(fontWeight: FontWeight.bold)),
+               const Text('Property Image', style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              SizedBox(
-                height: 100,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _availableImages.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
-                  itemBuilder: (context, index) {
-                    final imagePath = _availableImages[index];
-                    final isSelected = _selectedImage == imagePath;
-                    return GestureDetector(
-                      onTap: () => setState(() => _selectedImage = imagePath),
-                      child: Container(
-                        width: 100,
-                        decoration: BoxDecoration(
-                          border: isSelected ? Border.all(color: Colors.blue, width: 3) : null,
-                          borderRadius: BorderRadius.circular(8),
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  height: 150,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade400),
+                  ),
+                  child: _selectedImagePath == null
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.camera_alt, color: Colors.grey[600], size: 40),
+                            const SizedBox(height: 8),
+                            Text('Tap to select image', style: TextStyle(color: Colors.grey[600])),
+                          ],
+                        )
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.file(
+                            File(_selectedImagePath!),
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => 
+                                const Center(child: Text('Error loading image')),
+                          ),
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(5),
-                          child: Image.asset(imagePath, fit: BoxFit.cover),
-                        ),
-                      ),
-                    );
-                  },
                 ),
               ),
-              if (_selectedImage == null)
-                 const Padding(
-                   padding: EdgeInsets.only(top: 4.0),
-                   child: Text('Please select an image', style: TextStyle(color: Colors.red, fontSize: 12)),
-                 ),
               const SizedBox(height: 16),
 
               _buildTextField(_titleController, 'Title', 'e.g., Luxury Condo'),
@@ -200,7 +204,12 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
   }
 
   void _submitForm() {
-    if (_formKey.currentState!.validate() && _selectedImage != null) {
+    if (_formKey.currentState!.validate() && _selectedImagePath != null) {
+      final currentUser = ref.read(authNotifierProvider).value;
+      if (currentUser == null || currentUser.role != UserRole.owner.name) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('You must be logged in as an owner to add properties.')));
+        return;
+      }
       final selectedAmenities = _amenities.entries
           .where((entry) => entry.value)
           .map((entry) => entry.key)
@@ -212,23 +221,23 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
         description: _descriptionController.text,
         pricePerMonth: double.parse(_priceController.text),
         address: _addressController.text,
-        images: [_selectedImage!], // Use selected image
+        images: [_selectedImagePath!], // Use selected image path
         bedrooms: int.parse(_bedroomsController.text),
         bathrooms: int.parse(_bathroomsController.text),
         areaSquareFeet: double.parse(_areaController.text),
         amenities: selectedAmenities,
-        owner: const Owner(
-          id: 'owner1', // Hardcoded for this POC
-          name: 'Current Owner',
+        owner: Owner(
+          id: currentUser.id,
+          name: currentUser.name,
           imageUrl: '',
-          phoneNumber: '123-456-7890',
+          phoneNumber: '',
         ),
         isFeatured: false,
         isFavorite: false,
       );
 
       ref.read(propertyControllerProvider.notifier).addApartment(newApartment);
-    } else if (_selectedImage == null) {
+    } else if (_selectedImagePath == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select an image')));
     }
   }

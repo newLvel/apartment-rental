@@ -57,18 +57,6 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const TenantDashboardScreen(),
           ),
           GoRoute(
-            path: '/client_chats',
-            builder: (context, state) => const ChatListScreen(),
-          ),
-          GoRoute(
-            path: '/client_chat/:chatId',
-            builder: (context, state) {
-              final chatId = state.pathParameters['chatId']!;
-              final name = state.uri.queryParameters['name'] ?? 'Chat';
-              return ChatScreen(chatId: chatId, userName: name);
-            },
-          ),
-          GoRoute(
             path: '/client_profile',
             builder: (context, state) => const ClientProfileScreen(),
           ),
@@ -89,6 +77,25 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/add_property',
         builder: (context, state) => const AddPropertyScreen(),
+      ),
+      GoRoute(
+        path: '/owner_property_management/:apartmentId',
+        builder: (context, state) {
+          final apartmentId = state.pathParameters['apartmentId']!;
+          return OwnerPropertyManagementScreen(apartmentId: apartmentId);
+        },
+      ),
+      GoRoute(
+        path: '/chats',
+        builder: (context, state) => const ChatListScreen(),
+      ),
+      GoRoute(
+        path: '/chat/:chatId',
+        builder: (context, state) {
+          final chatId = state.pathParameters['chatId']!;
+          final name = state.uri.queryParameters['name'] ?? 'Chat';
+          return ChatScreen(chatId: chatId, userName: name);
+        },
       ),
       GoRoute(
         path: '/details/:apartmentId',

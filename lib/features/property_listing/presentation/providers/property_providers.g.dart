@@ -236,7 +236,7 @@ class _ApartmentsByOwnerProviderElement
 }
 
 String _$propertyControllerHash() =>
-    r'825ea70b35a6f5906582635987b3c04cb9b464ca';
+    r'9006661fb96ffad2882b6099c275ad43b7a93ca6';
 
 /// See also [PropertyController].
 @ProviderFor(PropertyController)
