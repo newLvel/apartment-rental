@@ -5,6 +5,7 @@ abstract class PropertyLocalDataSource {
   Future<List<ApartmentModel>> getApartments();
   Future<void> toggleFavorite(String id);
   Future<void> addApartment(ApartmentModel apartment);
+  Future<void> updateApartment(ApartmentModel apartment);
 }
 
 class PropertyLocalDataSourceImpl implements PropertyLocalDataSource {
@@ -31,6 +32,12 @@ class PropertyLocalDataSourceImpl implements PropertyLocalDataSource {
 
   @override
   Future<void> addApartment(ApartmentModel apartment) async {
+    await apartmentBox.put(apartment.id, apartment);
+  }
+
+  @override
+  Future<void> updateApartment(ApartmentModel apartment) async {
+    // Hive's put method handles both creation and update.
     await apartmentBox.put(apartment.id, apartment);
   }
 }

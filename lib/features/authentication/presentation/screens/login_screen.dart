@@ -110,7 +110,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           child: Center(
                             child: Text(
-                              'Landlord',
+                              'Owner',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: _selectedRole == UserRole.owner ? Colors.black : Colors.grey,
@@ -234,41 +234,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _handleLogin(WidgetRef ref) async {
-    debugPrint('[_handleLogin] started');
-    setState(() {
-      _isLoading = true;
-      debugPrint('[_handleLogin] _isLoading set to true');
-    });
+    setState(() => _isLoading = true);
     try {
-      debugPrint('[_handleLogin] calling authNotifierProvider.login');
       await ref.read(authNotifierProvider.notifier).login(
         email: _emailController.text,
         password: _passwordController.text,
+        // The role is determined by the login logic now, not the UI toggle.
+        // We will assume the backend/datasource can figure out the role from the email.
+        // For this POC, we'll just log in and the redirect will handle it.
       );
-      debugPrint('[_handleLogin] authNotifierProvider.login completed');
-      if (mounted) {
-        final currentUser = ref.read(authNotifierProvider).value;
-        debugPrint('[_handleLogin] current user: ${currentUser?.email}, role: ${currentUser?.role}');
-        if (currentUser?.role == UserRole.client.name) {
-          context.go('/client_home');
-        } else if (currentUser?.role == UserRole.owner.name) {
-          context.go('/owner_home');
-        } else {
-          context.go('/login');
-        }
-      }
+      // Navigation is now handled by GoRouter's redirect logic.
     } catch (e) {
-      debugPrint('[_handleLogin] caught error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Login Failed: ${e.toString()}')));
       }
     } finally {
-      debugPrint('[_handleLogin] finally block');
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-          debugPrint('[_handleLogin] _isLoading set to false');
-        });
+        setState(() => _isLoading = false);
       }
     }
   }

@@ -7,7 +7,7 @@ part of 'auth_provider.dart';
 // **************************************************************************
 
 String _$userLocalDataSourceHash() =>
-    r'61e33daac5ae5ac8844cae1fd296140e5773adb1';
+    r'f9efd598450298adbbf02988070811a50bbe13a2';
 
 /// See also [userLocalDataSource].
 @ProviderFor(userLocalDataSource)

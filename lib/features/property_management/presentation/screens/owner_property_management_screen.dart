@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:apartment_rental/features/property_listing/presentation/providers/property_providers.dart';
 import '../widgets/owner/owner_payments_tab.dart';
 import '../widgets/owner/owner_maintenance_tab.dart';
 import '../widgets/owner/owner_documents_tab.dart';
 
-class OwnerPropertyManagementScreen extends StatefulWidget {
+class OwnerPropertyManagementScreen extends ConsumerStatefulWidget {
   final String apartmentId;
 
   const OwnerPropertyManagementScreen({super.key, required this.apartmentId});
 
   @override
-  State<OwnerPropertyManagementScreen> createState() => _OwnerPropertyManagementScreenState();
+  ConsumerState<OwnerPropertyManagementScreen> createState() => _OwnerPropertyManagementScreenState();
 }
 
-class _OwnerPropertyManagementScreenState extends State<OwnerPropertyManagementScreen> with SingleTickerProviderStateMixin {
+class _OwnerPropertyManagementScreenState extends ConsumerState<OwnerPropertyManagementScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -30,6 +32,11 @@ class _OwnerPropertyManagementScreenState extends State<OwnerPropertyManagementS
 
   @override
   Widget build(BuildContext context) {
+    // Fetch the specific apartment to pass to the edit screen
+    final apartmentAsync = ref.watch(allApartmentsProvider).whenData(
+          (apartments) => apartments.firstWhere((apt) => apt.id == widget.apartmentId),
+        );
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
@@ -40,6 +47,18 @@ class _OwnerPropertyManagementScreenState extends State<OwnerPropertyManagementS
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
           onPressed: () => context.pop(),
         ),
+        actions: [
+          apartmentAsync.when(
+            data: (apartment) => IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: () {
+                context.push('/edit_property/${widget.apartmentId}', extra: apartment);
+              },
+            ),
+            loading: () => const SizedBox.shrink(),
+            error: (e, s) => const SizedBox.shrink(),
+          )
+        ],
         bottom: TabBar(
           controller: _tabController,
           labelColor: const Color(0xFFE85D32),

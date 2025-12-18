@@ -7,8 +7,14 @@ plugins {
 
 android {
     namespace = "com.example.apartment_rental"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.0.12077973"
+    compileSdkVersion(flutter.compileSdkVersion)
+
+    sourceSets {
+        getByName("main") {
+            java.srcDirs("src/main/kotlin")
+        }
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

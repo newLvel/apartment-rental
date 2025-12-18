@@ -55,11 +55,15 @@ class PropertyController extends _$PropertyController {
     state = await AsyncValue.guard(() async {
       await repository.addApartment(apartment);
       ref.invalidate(allApartmentsProvider);
-      // Also invalidate owner specific provider if possible, but it depends on parameters
-      // ref.invalidate(apartmentsByOwnerProvider(apartment.owner.id)); 
-      // Since it's a family, we might need to invalidate widely or specifically.
-      // For now, let's just assume we might need to refresh manually or structure providers better.
-      // But invalidating allApartmentsProvider is base.
+    });
+  }
+
+  Future<void> updateApartment(Apartment apartment) async {
+    final repository = ref.read(propertyRepositoryProvider);
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await repository.updateApartment(apartment);
+      ref.invalidate(allApartmentsProvider);
     });
   }
 }

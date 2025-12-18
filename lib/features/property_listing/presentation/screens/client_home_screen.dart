@@ -29,10 +29,10 @@ class ClientHomeScreen extends ConsumerWidget {
                     children: [
                       Text('Location', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)),
                       const SizedBox(height: 4),
-                      const Row(
+                      Row(
                         children: [
-                          Text('New York, USA', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-                          Icon(Icons.keyboard_arrow_down, color: Colors.blue),
+                          Text('Douala, Cameroon', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                          Icon(Icons.keyboard_arrow_down, color: Theme.of(context).primaryColor),
                         ],
                       ),
                     ],
@@ -84,7 +84,7 @@ class ClientHomeScreen extends ConsumerWidget {
                       height: 50,
                       width: 50,
                       decoration: BoxDecoration(
-                        color: Colors.blue, // Using default blue for now, or match theme
+                        color: Theme.of(context).primaryColor,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(Icons.tune, color: Colors.white),

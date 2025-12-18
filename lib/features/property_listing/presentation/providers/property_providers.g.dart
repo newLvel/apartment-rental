@@ -82,7 +82,7 @@ final featuredApartmentsProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef FeaturedApartmentsRef = AutoDisposeFutureProviderRef<List<Apartment>>;
-String _$apartmentsByOwnerHash() => r'cdaaf7dd76769276b38bd4736837298146555fbc';
+String _$apartmentsByOwnerHash() => r'36c48250d491cac94c65d8156db9ecb664f62be3';
 
 /// Copied from Dart SDK
 class _SystemHash {

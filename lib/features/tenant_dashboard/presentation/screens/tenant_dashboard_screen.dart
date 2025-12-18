@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:apartment_rental/features/booking/presentation/providers/booking_providers.dart';
+import 'package:apartment_rental/features/property_listing/presentation/providers/property_providers.dart';
+import 'package:apartment_rental/core/widgets/smart_image.dart';
 
 class TenantDashboardScreen extends ConsumerWidget {
   const TenantDashboardScreen({super.key});
@@ -10,6 +12,7 @@ class TenantDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     const userId = 'user1'; // Mock user
     final bookingsAsync = ref.watch(userBookingsProvider(userId));
+    final apartmentsAsync = ref.watch(allApartmentsProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA), // Light grey bg
@@ -32,15 +35,36 @@ class TenantDashboardScreen extends ConsumerWidget {
           if (bookings.isEmpty) {
             return const Center(child: Text('No active rentals.'));
           }
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: bookings.length,
-            itemBuilder: (context, index) {
-              final booking = bookings[index];
-              // In a real app we'd fetch the Apartment details. 
-              // For POC, we'll hardcode some data or use what we have.
-              return _buildPropertyCard(context, booking);
+          return apartmentsAsync.when(
+            data: (apartments) {
+              // Create a list of valid (booking, apartment) pairs
+              final validRentals = <MapEntry<dynamic, dynamic>>[];
+              for (final booking in bookings) {
+                try {
+                  final apartment = apartments.firstWhere((apt) => apt.id == booking.apartmentId);
+                  validRentals.add(MapEntry(booking, apartment));
+                } catch (e) {
+                  // Apartment not found for this booking, so we skip it.
+                  debugPrint('Apartment with id ${booking.apartmentId} not found for booking ${booking.id}');
+                }
+              }
+
+              if (validRentals.isEmpty) {
+                 return const Center(child: Text('Could not find details for your rentals.'));
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: validRentals.length,
+                itemBuilder: (context, index) {
+                  final booking = validRentals[index].key;
+                  final apartment = validRentals[index].value;
+                  return _buildPropertyCard(context, booking, apartment);
+                },
+              );
             },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, stack) => Center(child: Text('Error loading apartments: $err')),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -49,7 +73,7 @@ class TenantDashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildPropertyCard(BuildContext context, dynamic booking) {
+  Widget _buildPropertyCard(BuildContext context, dynamic booking, dynamic apartment) {
     return GestureDetector(
       onTap: () {
         context.push('/tenant_property_management/${booking.apartmentId}');
@@ -70,28 +94,27 @@ class TenantDashboardScreen extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            ClipRRect(
+            SmartImage(
+              imageUrl: apartment.images.first,
+              width: 80,
+              height: 80,
               borderRadius: BorderRadius.circular(12),
-              child: Image.asset(
-                'assets/images/apartment_4.webp', // Placeholder/Random
-                width: 80,
-                height: 80,
-                fit: BoxFit.cover,
-              ),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Villa No.12 - 55 B Street', // Mock title
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  Text(
+                    apartment.title,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'Old Dubai Hwy No 12',
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  Text(
+                    apartment.address,
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -99,19 +122,6 @@ class TenantDashboardScreen extends ConsumerWidget {
                     style: const TextStyle(color: Colors.grey, fontSize: 10),
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const Text(
-                        'Rate: ',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                      ),
-                      Text(
-                        'AED ${booking.totalPrice.toStringAsFixed(0)}/year',
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ],
-                  ),
-                   const SizedBox(height: 12),
                   // Mock Tags
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -11,7 +11,9 @@ import 'package:apartment_rental/features/property_listing/presentation/provider
 import 'package:apartment_rental/features/authentication/presentation/providers/auth_provider.dart';
 
 class AddPropertyScreen extends ConsumerStatefulWidget {
-  const AddPropertyScreen({super.key});
+  final Apartment? apartment; // Make apartment optional
+
+  const AddPropertyScreen({super.key, this.apartment});
 
   @override
   ConsumerState<AddPropertyScreen> createState() => _AddPropertyScreenState();
@@ -29,7 +31,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
   final _areaController = TextEditingController();
   
   // Image picker
-  String? _selectedImagePath; // To store the path of the selected image
+  String? _selectedImagePath;
   final ImagePicker _picker = ImagePicker();
 
   // Amenities selection
@@ -42,6 +44,27 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
     'Pet Friendly': false,
     'Garden': false,
   };
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.apartment != null) {
+      final apt = widget.apartment!;
+      _titleController.text = apt.title;
+      _descriptionController.text = apt.description;
+      _priceController.text = apt.pricePerMonth.toString();
+      _addressController.text = apt.address;
+      _bedroomsController.text = apt.bedrooms.toString();
+      _bathroomsController.text = apt.bathrooms.toString();
+      _areaController.text = apt.areaSquareFeet.toString();
+      _selectedImagePath = apt.images.isNotEmpty ? apt.images.first : null;
+      for (var amenity in apt.amenities) {
+        if (_amenities.containsKey(amenity)) {
+          _amenities[amenity] = true;
+        }
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -66,12 +89,12 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
   Widget build(BuildContext context) {
     final controllerState = ref.watch(propertyControllerProvider);
     final isLoading = controllerState.isLoading;
-    final currentUser = ref.watch(authNotifierProvider).value; // Get current user
+    final isEditMode = widget.apartment != null;
 
     ref.listen(propertyControllerProvider, (previous, next) {
       if (!next.isLoading && !next.hasError && previous?.isLoading == true) {
         // Success
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Property Added Successfully!')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Property ${isEditMode ? 'Updated' : 'Added'} Successfully!')));
         context.pop();
       } else if (next.hasError) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${next.error}')));
@@ -79,7 +102,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Add New Property')),
+      appBar: AppBar(title: Text(isEditMode ? 'Edit Property' : 'Add New Property')),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -172,7 +195,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
                   ),
                   child: isLoading 
                     ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white))
-                    : const Text('Add Property'),
+                    : Text(isEditMode ? 'Update Property' : 'Add Property'),
                 ),
               ),
             ],
@@ -207,7 +230,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
     if (_formKey.currentState!.validate() && _selectedImagePath != null) {
       final currentUser = ref.read(authNotifierProvider).value;
       if (currentUser == null || currentUser.role != UserRole.owner.name) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('You must be logged in as an owner to add properties.')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('You must be logged in as an owner.')));
         return;
       }
       final selectedAmenities = _amenities.entries
@@ -215,13 +238,13 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
           .map((entry) => entry.key)
           .toList();
 
-      final newApartment = Apartment(
-        id: const Uuid().v4(),
+      final apartmentData = Apartment(
+        id: widget.apartment?.id ?? const Uuid().v4(),
         title: _titleController.text,
         description: _descriptionController.text,
         pricePerMonth: double.parse(_priceController.text),
         address: _addressController.text,
-        images: [_selectedImagePath!], // Use selected image path
+        images: [_selectedImagePath!],
         bedrooms: int.parse(_bedroomsController.text),
         bathrooms: int.parse(_bathroomsController.text),
         areaSquareFeet: double.parse(_areaController.text),
@@ -232,11 +255,16 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
           imageUrl: '',
           phoneNumber: '',
         ),
-        isFeatured: false,
-        isFavorite: false,
+        isFeatured: widget.apartment?.isFeatured ?? false,
+        isFavorite: widget.apartment?.isFavorite ?? false,
       );
 
-      ref.read(propertyControllerProvider.notifier).addApartment(newApartment);
+      if (widget.apartment != null) {
+        ref.read(propertyControllerProvider.notifier).updateApartment(apartmentData);
+      } else {
+        ref.read(propertyControllerProvider.notifier).addApartment(apartmentData);
+      }
+
     } else if (_selectedImagePath == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select an image')));
     }

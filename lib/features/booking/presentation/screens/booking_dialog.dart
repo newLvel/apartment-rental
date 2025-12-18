@@ -21,6 +21,7 @@ class _BookingDialogState extends ConsumerState<BookingDialog> {
   Widget build(BuildContext context) {
     final bookingState = ref.watch(bookingControllerProvider);
     final isLoading = bookingState.isLoading;
+    final currencyFormatter = NumberFormat.currency(locale: 'fr_CM', symbol: 'XAF', decimalDigits: 0);
 
     // Listen for success/error
     ref.listen(bookingControllerProvider, (previous, next) {
@@ -39,10 +40,7 @@ class _BookingDialogState extends ConsumerState<BookingDialog> {
 
     double totalPrice = 0;
     if (_selectedDateRange != null) {
-      final days = _selectedDateRange!.duration.inDays + 1; // Include start day
-      // Assuming pricePerMonth is for 30 days for simplicity in this POC, 
-      // or we can treat it as a per-night rate / 30. 
-      // Let's assume pricePerMonth / 30 = daily rate.
+      final days = _selectedDateRange!.duration.inDays + 1; 
       final dailyRate = widget.apartment.pricePerMonth / 30;
       totalPrice = dailyRate * days;
     }
@@ -75,7 +73,7 @@ class _BookingDialogState extends ConsumerState<BookingDialog> {
           if (_selectedDateRange != null) ...[
             const SizedBox(height: 16),
             Text('Total Days: ${_selectedDateRange!.duration.inDays + 1}'),
-            Text('Total Price: \$${totalPrice.toStringAsFixed(2)}'),
+            Text('Total Price: ${currencyFormatter.format(totalPrice)}'),
           ],
         ],
       ),

@@ -78,20 +78,29 @@ class PaymentsTab extends StatelessWidget {
           const Divider(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Rate', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(amount, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                      const SizedBox(width: 8),
-                      Text(status, style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Rate', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Text(amount, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        const SizedBox(width: 8),
+                        Flexible( // Use Flexible to allow status text to wrap if needed
+                          child: Text(
+                            status, 
+                            style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               if (action != null)
                 ElevatedButton(

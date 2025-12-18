@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:apartment_rental/features/property_listing/presentation/providers/property_providers.dart';
 import 'package:apartment_rental/features/booking/presentation/screens/booking_dialog.dart';
 import 'package:apartment_rental/core/widgets/smart_image.dart';
+import 'package:apartment_rental/features/chat/presentation/providers/chat_providers.dart';
+import 'package:apartment_rental/features/authentication/presentation/providers/auth_provider.dart';
 
 class ApartmentDetailsScreen extends ConsumerWidget {
   final String apartmentId;
@@ -18,6 +21,7 @@ class ApartmentDetailsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final allApartmentsAsync = ref.watch(allApartmentsProvider);
+    final currencyFormatter = NumberFormat.currency(locale: 'fr_CM', symbol: 'XAF', decimalDigits: 0);
 
     return Scaffold(
       body: allApartmentsAsync.when(
@@ -81,7 +85,7 @@ class ApartmentDetailsScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        '\$${apartment.pricePerMonth.toStringAsFixed(0)} / month',
+                        '${currencyFormatter.format(apartment.pricePerMonth)} / month',
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               color: Theme.of(context).primaryColor,
                               fontWeight: FontWeight.bold,
@@ -129,26 +133,40 @@ class ApartmentDetailsScreen extends ConsumerWidget {
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 12),
-                      ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: Colors.blue.shade100,
-                          child: const Icon(Icons.person, color: Colors.blue),
-                        ),
-                        title: Text(apartment.owner.name, style: Theme.of(context).textTheme.titleMedium),
-                        subtitle: Text(apartment.owner.phoneNumber),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.phone, color: Colors.green),
-                              onPressed: () {},
+                      Consumer(
+                        builder: (context, ref, child) {
+                          final authUser = ref.watch(authNotifierProvider).value;
+                          final isUserLoggedIn = authUser != null;
+
+                          return ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: Colors.blue.shade100,
+                              child: const Icon(Icons.person, color: Colors.blue),
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.message, color: Colors.blue),
-                              onPressed: () {},
-                            ),
-                          ],
-                        ),
+                            title: Text(apartment.owner.name, style: Theme.of(context).textTheme.titleMedium),
+                            subtitle: Text(apartment.owner.phoneNumber),
+                            trailing: isOwnerView || !isUserLoggedIn
+                                ? null
+                                : Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.chat_bubble_outline, color: Colors.blue),
+                                        onPressed: () async {
+                                          final conversationId = await ref.read(chatControllerProvider.notifier).getOrCreateConversation(apartment.owner.id);
+                                          if (context.mounted) {
+                                            context.push('/chat/$conversationId?name=${Uri.encodeComponent(apartment.owner.name)}');
+                                          }
+                                        },
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.phone, color: Colors.green),
+                                        onPressed: () {},
+                                      ),
+                                    ],
+                                  ),
+                          );
+                        },
                       ),
                       const SizedBox(height: 30),
                       if (!isOwnerView) // Only show Book Now if not owner view

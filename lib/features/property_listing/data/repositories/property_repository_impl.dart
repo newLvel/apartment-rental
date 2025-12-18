@@ -51,6 +51,32 @@ class PropertyRepositoryImpl implements PropertyRepository {
     );
     await localDataSource.addApartment(model);
   }
+
+  @override
+  Future<void> updateApartment(Apartment apartment) async {
+    // Re-use the same mapping logic, as the model structure is the same.
+    final model = ApartmentModel(
+      id: apartment.id,
+      title: apartment.title,
+      description: apartment.description,
+      pricePerMonth: apartment.pricePerMonth,
+      address: apartment.address,
+      images: apartment.images,
+      bedrooms: apartment.bedrooms,
+      bathrooms: apartment.bathrooms,
+      areaSquareFeet: apartment.areaSquareFeet,
+      amenities: apartment.amenities,
+      owner: OwnerModel(
+        id: apartment.owner.id,
+        name: apartment.owner.name,
+        imageUrl: apartment.owner.imageUrl,
+        phoneNumber: apartment.owner.phoneNumber,
+      ),
+      isFeatured: apartment.isFeatured,
+      isFavorite: apartment.isFavorite,
+    );
+    await localDataSource.updateApartment(model);
+  }
 }
 
 extension ApartmentModelX on ApartmentModel {

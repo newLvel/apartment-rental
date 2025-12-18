@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../domain/entities/apartment.dart';
 import '../providers/property_providers.dart';
 import 'package:apartment_rental/core/widgets/smart_image.dart';
@@ -13,6 +14,8 @@ class PropertyCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currencyFormatter = NumberFormat.currency(locale: 'fr_CM', symbol: 'XAF', decimalDigits: 0);
+
     return GestureDetector(
       onTap: () {
         GoRouter.of(context).push('/details/${apartment.id}');
@@ -103,7 +106,7 @@ class PropertyCard extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '\$${apartment.pricePerMonth.toStringAsFixed(0)} / month',
+                    '${currencyFormatter.format(apartment.pricePerMonth)} / month',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       color: Theme.of(context).primaryColor,
                       fontWeight: FontWeight.bold,

@@ -121,7 +121,7 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
                               Icon(Icons.home_work, color: _selectedRole == UserRole.owner ? const Color(0xFFE85D32) : Colors.grey),
                               const SizedBox(height: 4),
                               Text(
-                                'Landlord',
+                                'Owner',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: _selectedRole == UserRole.owner ? const Color(0xFFE85D32) : Colors.grey,
@@ -234,47 +234,25 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
   }
 
   void _handleRegister() async {
-    debugPrint('[_handleRegister] started');
     if (_formKey.currentState!.validate()) {
-      debugPrint('[_handleRegister] form is valid');
-      setState(() {
-        _isLoading = true;
-        debugPrint('[_handleRegister] _isLoading set to true');
-      });
+      setState(() => _isLoading = true);
       try {
-        debugPrint('[_handleRegister] calling authNotifierProvider.register');
         await ref.read(authNotifierProvider.notifier).register(
           name: _nameController.text,
           email: _emailController.text,
           password: _passwordController.text,
           role: _selectedRole,
         );
-        debugPrint('[_handleRegister] authNotifierProvider.register completed');
-        if (mounted) {
-          final currentUser = ref.read(authNotifierProvider).value;
-          debugPrint('[_handleRegister] current user: ${currentUser?.email}, role: ${currentUser?.role}');
-          if (currentUser?.role == UserRole.client.name) {
-            context.go('/client_home');
-          } else if (currentUser?.role == UserRole.owner.name) {
-            context.go('/owner_home');
-          }
-        }
+        // Navigation is now handled by GoRouter's redirect logic.
       } catch (e) {
-        debugPrint('[_handleRegister] caught error: $e');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Registration Failed: ${e.toString()}')));
         }
       } finally {
-        debugPrint('[_handleRegister] finally block');
         if (mounted) {
-          setState(() {
-            _isLoading = false;
-            debugPrint('[_handleRegister] _isLoading set to false');
-          });
+          setState(() => _isLoading = false);
         }
       }
-    } else {
-      debugPrint('[_handleRegister] form is NOT valid');
     }
   }
 }

@@ -9,6 +9,7 @@ import 'package:apartment_rental/features/property_listing/data/models/apartment
 import 'package:apartment_rental/features/property_listing/data/models/owner_model.dart';
 import 'package:apartment_rental/features/booking/data/models/booking_model.dart';
 import 'package:apartment_rental/features/authentication/data/models/user_model.dart';
+import 'package:apartment_rental/features/chat/data/models/chat_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,19 +21,32 @@ void main() async {
   Hive.registerAdapter(OwnerModelAdapter());
   Hive.registerAdapter(ApartmentModelAdapter());
   Hive.registerAdapter(BookingModelAdapter());
-  Hive.registerAdapter(UserModelAdapter()); // Register UserModelAdapter
+  Hive.registerAdapter(UserModelAdapter());
+  Hive.registerAdapter(ChatConversationModelAdapter());
+  Hive.registerAdapter(ChatMessageModelAdapter());
 
   // Open Boxes
   final apartmentBox = await Hive.openBox<ApartmentModel>(AppConstants.apartmentBox);
-  await Hive.openBox<BookingModel>(AppConstants.bookingBox);
-  await Hive.openBox<UserModel>(AppConstants.userBox); // Open user box
-  await Hive.openBox<String>(AppConstants.userPreferencesBox); // Open user preferences box
+  final userBox = await Hive.openBox<UserModel>(AppConstants.userBox);
+  final bookingBox = await Hive.openBox<BookingModel>(AppConstants.bookingBox);
+  final conversationBox = await Hive.openBox<ChatConversationModel>(AppConstants.conversationBox);
+  final messageBox = await Hive.openBox<ChatMessageModel>(AppConstants.messageBox);
+  await Hive.openBox<String>(AppConstants.userPreferencesBox);
   
-  // Seeding
-  if (apartmentBox.isEmpty) {
-    await apartmentBox.addAll(seedApartments);
-    debugPrint('Seeded apartments: ${apartmentBox.length}');
-  }
+  // RESET & SEED
+  await apartmentBox.clear();
+  await userBox.clear();
+  await bookingBox.clear();
+  await conversationBox.clear();
+  await messageBox.clear();
+  
+  await apartmentBox.addAll(seedApartments.map((a) => MapEntry(a.id, a)).toList().map((e) => e.value));
+  await userBox.addAll(seedUsers.map((u) => MapEntry(u.id, u)).toList().map((e) => e.value));
+  await bookingBox.addAll(seedBookings.map((b) => MapEntry(b.id, b)).toList().map((e) => e.value));
+  await conversationBox.addAll(seedConversations.map((c) => MapEntry(c.id, c)).toList().map((e) => e.value));
+  await messageBox.addAll(seedMessages.map((m) => MapEntry(m.id, m)).toList().map((e) => e.value));
+  
+debugPrint('Database Cleared & Seeded');
 
   runApp(const ProviderScope(child: MyApp()));
 }
@@ -45,10 +59,13 @@ class MyApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
     return MaterialApp.router(
       routerConfig: router,
-      title: 'Apartment Rental',
+      title: 'Apartment Rental CM',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFFE85D32), // Cameroonian Clay/Earth tone match? Or just the Orange
+          primary: const Color(0xFFE85D32),
+        ),
         useMaterial3: true,
         fontFamily: 'Poppins', 
       ),
